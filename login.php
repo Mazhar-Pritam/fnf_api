@@ -2,6 +2,7 @@
 
 include 'connection.php';
 $data = json_decode(file_get_contents("php://input"),true);
+
 $data['password'] = sha1(trim($data['password']));
 
 $rdata=[];
