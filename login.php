@@ -1,28 +1,56 @@
 <?php
 
 include 'connection.php';
-$data = json_decode(file_get_contents("php://input"),true);
+$data = json_decode(file_get_contents("php://input"), true);
 
-$data['password'] = sha1(trim($data['password']));
+if (
+	!is_array($data) ||
+	!isset($data['email'], $data['password']) ||
+	!is_string($data['email']) ||
+	!is_string($data['password']) ||
+	trim($data['email']) === '' ||
+	trim($data['password']) === ''
+) {
+	echo json_encode(array(
+		"status" => false,
+		"message" => "Email and password are required."
+	));
+	exit;
+}
 
-$rdata=[];
+$result = $cc->common_select("users", '*', array(
+	"email" => trim($data['email']),
+	"password" => sha1(trim($data['password']))
+));
 
-$result=$cc->common_select("users",'*',$data);
-if($result['status'] === true && count($result['data']) > 0){
-	$rdata=$result['data'][0];
-	
-	$remember_token=rand(1111,9999).time().rand(111111,999999);
+if ($result['status'] === true && count($result['data']) > 0) {
+	$rdata = $result['data'][0];
+	$remember_token = bin2hex(random_bytes(32));
 
-	/* update remember_token in database */
-	$cc->common_update("users",['remember_token'=>$remember_token],['id'=>$rdata->id]);
-	
-	echo json_encode(
-		array(
-			"message" => "Successful login.",
-			"jwt" => $remember_token,
-			"data"=>json_encode($rdata)
+	$update = $cc->common_update(
+		"users",
+		array("remember_token" => $remember_token),
+		array("id" => $rdata->id)
+	);
+	if ($update['status'] !== true) {
+		http_response_code(500);
+		echo json_encode(array(
+			"status" => false,
+			"message" => "Unable to complete sign in. Please try again."
 		));
-	
-}else{
-	echo json_encode(array("message" => "Login failed."));
+		exit;
+	}
+
+	unset($rdata->password, $rdata->remember_token);
+	echo json_encode(array(
+		"status" => true,
+		"message" => "Successful login.",
+		"jwt" => $remember_token,
+		"data" => json_encode($rdata)
+	));
+} else {
+	echo json_encode(array(
+		"status" => false,
+		"message" => "Invalid email or password."
+	));
 }
