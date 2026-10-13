@@ -1,8 +1,29 @@
 <?php
 include '../connection.php';
-$data = json_decode( file_get_contents('php://input'),true );
-$id=$_GET['id'];
+include '../auth_check.php';
 
-$res=$cc->common_update('categories',$data,['id'=>$id]);
+$id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+$data = $_POST;
+
+if (empty($data)) {
+    $jsonData = json_decode(file_get_contents('php://input'), true);
+    if (is_array($jsonData)) {
+        $data = $jsonData;
+    }
+}
+
+if (!$id || $id < 1) {
+    $res = [
+        'status' => false,
+        'message' => 'Category ID is required'
+    ];
+} elseif (empty($data)) {
+    $res = [
+        'status' => false,
+        'message' => 'No category data was provided'
+    ];
+} else {
+    $res = $cc->common_update('categories', $data, ['id' => $id]);
+}
 
 echo json_encode($res);

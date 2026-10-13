@@ -1,30 +1,19 @@
-
 <?php
-
 include '../connection.php';
 include '../auth_check.php';
 
-$res = [];
+$uploadDir = '../';
+$image="";
+if (!empty($_FILES['image'])) {
+    $name = rand().basename($_FILES['image']['name']);
+    $targetPath = 'suppliers/'.$name;
 
-if (!empty($_POST['name']) && !empty($_POST['phone'])) {
-
-    $data = [
-        'name' => $_POST['name'],
-        'contact_person' => $_POST['contact_person'] ?? '',
-        'phone' => $_POST['phone'],
-        'email' => $_POST['email'] ?? '',
-        'address' => $_POST['address'] ?? ''
-    ];
-
-    $res = $cc->common_insert('suppliers', $data);
-
-} else {
-
-    $res = [
-        'status' => false,
-        'message' => 'Supplier name and phone are required'
-    ];
-
+    if (move_uploaded_file($_FILES['image']['tmp_name'], $uploadDir . $targetPath)) {
+        $_POST['image']=$targetPath;
+    }
+} 
+$res=[];
+if($_POST['name']){
+    $res=$cc->common_insert('suppliers', $_POST);
 }
-
 echo json_encode($res);
