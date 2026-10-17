@@ -1,0 +1,9 @@
+CREATE TABLE purchases (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  invoice_no VARCHAR(50) NOT NULL,
+  supplier_id INT NOT NULL,
+  purchase_date DATE NOT NULL,
+  total_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
+  note VARCHAR(255) DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
