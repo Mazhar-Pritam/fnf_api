@@ -186,7 +186,7 @@ class crud_class
         $sql = "UPDATE $table SET ";
         $set_clauses = [];
         foreach ($data as $column => $value) {
-            $set_clauses[] = "$column = '$value'";
+            $set_clauses[] = "$column = '" . $this->conn->real_escape_string($value) . "'";
         }
         $sql .= implode(", ", $set_clauses);
 
@@ -242,4 +242,3 @@ class crud_class
         $this->conn->close();
     }
 }
-
