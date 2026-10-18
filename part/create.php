@@ -13,6 +13,7 @@ if (!empty($_FILES['image']) && $_FILES['image']['error'] === 0) {
 }
 $res=[];
 if(!empty($_POST['name']) && !empty($_POST['category_id'])){
+    unset($_POST['stock_quantity']);
     $res=$cc->common_insert('parts', $_POST);
 }else{
     $res=[

@@ -23,6 +23,7 @@ if (!$id || $id < 1) {
         'message' => 'No part data was provided'
     ];
 } else {
+    unset($data['stock_quantity']);
     $res = $cc->common_update('parts', $data, ['id' => $id]);
 }
 

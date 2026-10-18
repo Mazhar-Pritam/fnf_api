@@ -1,29 +1,66 @@
 <?php
 include '../connection.php';
 include '../auth_check.php';
+include 'helper.php';
 
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
+$conn = $cc->conn;
+$started = false;
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
-$data = $_POST;
 
-if (empty($data)) {
-    $jsonData = json_decode(file_get_contents('php://input'), true);
-    if (is_array($jsonData)) {
-        $data = $jsonData;
+try {
+    if (!$id || $id < 1) {
+        throw new InvalidArgumentException('Purchase ID is required');
     }
-}
 
-if (!$id || $id < 1) {
+    $p = purchase_read_input();
+
+    $conn->begin_transaction();
+    $started = true;
+
+    purchase_lock($conn, $id);
+    purchase_check_supplier($conn, $p['supplier_id']);
+
+    // Change stock only by the difference between the old and the new quantities.
+    $old = purchase_old_quantities($conn, $id);
+    $new = [];
+    foreach ($p['items'] as $item) {
+        $new[$item['part_id']] = $item['quantity'];
+    }
+    foreach (array_unique(array_merge(array_keys($old), array_keys($new))) as $part_id) {
+        $delta = ($new[$part_id] ?? 0) - ($old[$part_id] ?? 0);
+        purchase_adjust_stock($conn, $part_id, $delta);
+    }
+
+    $stmt = $conn->prepare("DELETE FROM purchase_items WHERE purchase_id = ?");
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $stmt->close();
+
+    purchase_insert_items($conn, $id, $p['items']);
+
+    $stmt = $conn->prepare("UPDATE purchases SET invoice_no = ?, supplier_id = ?, purchase_date = ?, total_amount = ?, note = ? WHERE id = ?");
+    $stmt->bind_param('sisdsi', $p['invoice_no'], $p['supplier_id'], $p['purchase_date'], $p['total_amount'], $p['note'], $id);
+    $stmt->execute();
+    $stmt->close();
+
+    $conn->commit();
+
+    $res = [
+        'status' => true,
+        'data' => $id,
+        'message' => 'Purchase updated and stock adjusted'
+    ];
+} catch (Throwable $e) {
+    if ($started) {
+        $conn->rollback();
+    }
     $res = [
         'status' => false,
-        'message' => 'Purchase ID is required'
+        'data' => [],
+        'message' => $e->getMessage()
     ];
-} elseif (empty($data)) {
-    $res = [
-        'status' => false,
-        'message' => 'No purchase data was provided'
-    ];
-} else {
-    $res = $cc->common_update('purchases', $data, ['id' => $id]);
 }
 
 echo json_encode($res);
