@@ -15,7 +15,7 @@ try {
 
     if ($result['status']) {
         $stmt = $cc->conn->prepare(
-            "SELECT pi.part_id, pi.quantity, pi.unit_price, p.category_id, p.name AS part_name
+            "SELECT pi.part_id, pi.quantity, pi.unit_price, IF(pi.sale_price > 0, pi.sale_price, p.sale_price) AS sale_price, p.category_id, p.name AS part_name
              FROM purchase_items pi
              LEFT JOIN parts p ON p.id = pi.part_id
              WHERE pi.purchase_id = ?

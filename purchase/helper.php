@@ -33,9 +33,10 @@ function purchase_read_input()
         $part_id = (int)($row['part_id'] ?? 0);
         $quantity = (int)($row['quantity'] ?? 0);
         $unit_price = (isset($row['unit_price']) && is_numeric($row['unit_price'])) ? (float)$row['unit_price'] : -1;
+        $sale_price = (isset($row['sale_price']) && is_numeric($row['sale_price'])) ? (float)$row['sale_price'] : -1;
 
-        if ($part_id < 1 || $quantity < 1 || $unit_price < 0) {
-            throw new InvalidArgumentException('Each item needs a part, a quantity of at least 1 and a valid unit price');
+        if ($part_id < 1 || $quantity < 1 || $unit_price < 0 || $sale_price < 0) {
+            throw new InvalidArgumentException('Each item needs a part, a quantity of at least 1, a purchase price and a sale price');
         }
         if (isset($seen[$part_id])) {
             throw new InvalidArgumentException('The same part is added more than once. Please combine it into one row');
@@ -46,6 +47,7 @@ function purchase_read_input()
             'part_id' => $part_id,
             'quantity' => $quantity,
             'unit_price' => $unit_price,
+            'sale_price' => $sale_price,
         ];
         $total += $quantity * $unit_price;
     }
@@ -106,13 +108,14 @@ function purchase_old_quantities($conn, $purchase_id)
 
 function purchase_insert_items($conn, $purchase_id, $items)
 {
-    $stmt = $conn->prepare("INSERT INTO purchase_items (purchase_id, part_id, quantity, unit_price, line_total) VALUES (?, ?, ?, ?, ?)");
+    $stmt = $conn->prepare("INSERT INTO purchase_items (purchase_id, part_id, quantity, unit_price, sale_price, line_total) VALUES (?, ?, ?, ?, ?, ?)");
     foreach ($items as $item) {
         $part_id = $item['part_id'];
         $quantity = $item['quantity'];
         $unit_price = $item['unit_price'];
+        $sale_price = $item['sale_price'];
         $line_total = round($quantity * $unit_price, 2);
-        $stmt->bind_param('iiidd', $purchase_id, $part_id, $quantity, $unit_price, $line_total);
+        $stmt->bind_param('iiiddd', $purchase_id, $part_id, $quantity, $unit_price, $sale_price, $line_total);
         $stmt->execute();
     }
     $stmt->close();
@@ -134,4 +137,43 @@ function purchase_adjust_stock($conn, $part_id, $delta)
     if (!$done) {
         throw new RuntimeException("Stock could not be updated for part #$part_id. The part was not found, or its stock would go below zero (it may already be sold).");
     }
+}
+
+
+// Copies the prices of the part's latest purchase (latest purchase_date, then latest id)
+// to the part: parts.purchase_price and parts.sale_price.
+// A price of 0 is ignored, so old purchases without a sale price never wipe a part's price.
+// If a part has no purchase left, its prices are not changed.
+function purchase_refresh_last_price($conn, $part_ids)
+{
+    $find = $conn->prepare(
+        "SELECT pi.unit_price, pi.sale_price
+         FROM purchase_items pi
+         JOIN purchases pu ON pu.id = pi.purchase_id
+         WHERE pi.part_id = ?
+         ORDER BY pu.purchase_date DESC, pu.id DESC
+         LIMIT 1"
+    );
+    $set = $conn->prepare(
+        "UPDATE parts
+         SET purchase_price = IF(? > 0, ?, purchase_price),
+             sale_price = IF(? > 0, ?, sale_price)
+         WHERE id = ?"
+    );
+
+    foreach (array_unique($part_ids) as $part_id) {
+        $part_id = (int)$part_id;
+        $find->bind_param('i', $part_id);
+        $find->execute();
+        $row = $find->get_result()->fetch_assoc();
+        if ($row) {
+            $buy = (float)$row['unit_price'];
+            $sell = (float)$row['sale_price'];
+            $set->bind_param('ddddi', $buy, $buy, $sell, $sell, $part_id);
+            $set->execute();
+        }
+    }
+
+    $find->close();
+    $set->close();
 }
