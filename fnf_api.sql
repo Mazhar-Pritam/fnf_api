@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 18, 2026 at 09:06 AM
+-- Generation Time: Oct 24, 2026 at 10:06 PM
 -- Server version: 10.4.32-MariaDB
--- PHP Version: 8.2.12
+-- PHP Version: 8.0.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -82,6 +82,23 @@ INSERT INTO `customers` (`id`, `name`, `phone`, `email`, `address`, `created_at`
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `expenses`
+--
+
+CREATE TABLE `expenses` (
+  `id` int(11) NOT NULL,
+  `expense_date` date NOT NULL,
+  `category` varchar(50) NOT NULL,
+  `amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `method` varchar(20) NOT NULL DEFAULT 'Cash',
+  `note` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `deleted_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `parts`
 --
 
@@ -98,16 +115,37 @@ CREATE TABLE `parts` (
   `status` int(11) NOT NULL DEFAULT 1,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
-  `deleted_at` datetime DEFAULT NULL
+  `deleted_at` datetime DEFAULT NULL,
+  `brand` varchar(100) DEFAULT NULL,
+  `vehicle_model` varchar(100) DEFAULT NULL,
+  `minimum_stock` int(11) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `parts`
 --
 
-INSERT INTO `parts` (`id`, `name`, `part_number`, `category_id`, `purchase_price`, `sale_price`, `stock_quantity`, `description`, `image`, `status`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(4, 'Break Pads', '52444', 28, 455.00, 0.00, 100, 'f', 'part/241601084breakpads.jpeg', 1, NULL, NULL, NULL),
-(5, 'Suspension & Steering', '52444', 31, 0.00, 0.00, 130, 'f', 'part/885300817suspension.jpeg', 1, NULL, NULL, NULL);
+INSERT INTO `parts` (`id`, `name`, `part_number`, `category_id`, `purchase_price`, `sale_price`, `stock_quantity`, `description`, `image`, `status`, `created_at`, `updated_at`, `deleted_at`, `brand`, `vehicle_model`, `minimum_stock`) VALUES
+(6, 'Pistons', 'pst002', 27, 750.00, 980.00, 103, 'Safety', NULL, 1, NULL, NULL, NULL, 'bbs', 'harrier', 0);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `payments`
+--
+
+CREATE TABLE `payments` (
+  `id` int(11) NOT NULL,
+  `payment_no` varchar(50) NOT NULL,
+  `type` varchar(10) NOT NULL,
+  `party_id` int(11) NOT NULL,
+  `amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `method` varchar(20) NOT NULL DEFAULT 'Cash',
+  `payment_date` date NOT NULL,
+  `note` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `deleted_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -134,7 +172,9 @@ CREATE TABLE `purchases` (
 
 INSERT INTO `purchases` (`id`, `invoice_no`, `supplier_id`, `purchase_date`, `total_amount`, `note`, `created_at`, `status`, `updated_at`, `deleted_at`) VALUES
 (8, '654522', 14, '2026-10-20', 45500.00, 'Due', '2026-10-18 06:59:16', 1, NULL, NULL),
-(9, '654522', 15, '2026-10-22', 45500.00, 'Due', '2026-10-18 07:02:17', 1, NULL, NULL);
+(9, '654522', 15, '2026-10-22', 45500.00, 'Due', '2026-10-18 07:02:17', 1, NULL, NULL),
+(11, '77445', 14, '2026-10-20', 75000.00, 'Cash', '2026-10-24 14:30:18', 1, NULL, NULL),
+(12, '77445', 15, '2026-10-22', 75000.00, 'Cash', '2026-10-24 18:58:57', 1, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -148,6 +188,7 @@ CREATE TABLE `purchase_items` (
   `part_id` int(11) NOT NULL,
   `quantity` int(11) NOT NULL,
   `unit_price` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `sale_price` decimal(12,2) NOT NULL DEFAULT 0.00,
   `line_total` decimal(12,2) NOT NULL DEFAULT 0.00,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -156,11 +197,159 @@ CREATE TABLE `purchase_items` (
 -- Dumping data for table `purchase_items`
 --
 
-INSERT INTO `purchase_items` (`id`, `purchase_id`, `part_id`, `quantity`, `unit_price`, `line_total`, `created_at`) VALUES
-(1, 6, 3, 100, 380.00, 38000.00, '2026-10-18 06:36:37'),
-(2, 7, 3, 1000, 380.00, 380000.00, '2026-10-18 06:38:43'),
-(3, 8, 4, 100, 455.00, 45500.00, '2026-10-18 06:59:16'),
-(4, 9, 5, 130, 350.00, 45500.00, '2026-10-18 07:02:17');
+INSERT INTO `purchase_items` (`id`, `purchase_id`, `part_id`, `quantity`, `unit_price`, `sale_price`, `line_total`, `created_at`) VALUES
+(1, 6, 3, 100, 380.00, 0.00, 38000.00, '2026-10-18 06:36:37'),
+(2, 7, 3, 1000, 380.00, 0.00, 380000.00, '2026-10-18 06:38:43'),
+(3, 8, 4, 100, 455.00, 0.00, 45500.00, '2026-10-18 06:59:16'),
+(4, 9, 5, 130, 350.00, 0.00, 45500.00, '2026-10-18 07:02:17'),
+(5, 11, 6, 100, 750.00, 980.00, 75000.00, '2026-10-24 14:30:18'),
+(6, 12, 6, 100, 750.00, 980.00, 75000.00, '2026-10-24 18:58:57');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `purchase_returns`
+--
+
+CREATE TABLE `purchase_returns` (
+  `id` int(11) NOT NULL,
+  `return_no` varchar(50) NOT NULL,
+  `purchase_id` int(11) NOT NULL,
+  `supplier_id` int(11) NOT NULL,
+  `return_date` date NOT NULL,
+  `total_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `note` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `deleted_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `purchase_returns`
+--
+
+INSERT INTO `purchase_returns` (`id`, `return_no`, `purchase_id`, `supplier_id`, `return_date`, `total_amount`, `note`, `created_at`, `deleted_at`) VALUES
+(1, '0211', 11, 14, '2026-10-21', 15000.00, 'damage', '2026-10-24 19:21:24', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `purchase_return_items`
+--
+
+CREATE TABLE `purchase_return_items` (
+  `id` int(11) NOT NULL,
+  `purchase_return_id` int(11) NOT NULL,
+  `part_id` int(11) NOT NULL,
+  `quantity` int(11) NOT NULL,
+  `unit_price` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `line_total` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `purchase_return_items`
+--
+
+INSERT INTO `purchase_return_items` (`id`, `purchase_return_id`, `part_id`, `quantity`, `unit_price`, `line_total`, `created_at`) VALUES
+(1, 1, 6, 20, 750.00, 15000.00, '2026-10-24 19:21:25');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sales`
+--
+
+CREATE TABLE `sales` (
+  `id` int(11) NOT NULL,
+  `invoice_no` varchar(50) NOT NULL,
+  `customer_id` int(11) NOT NULL,
+  `sale_date` date NOT NULL,
+  `total_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `note` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `deleted_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `sales`
+--
+
+INSERT INTO `sales` (`id`, `invoice_no`, `customer_id`, `sale_date`, `total_amount`, `note`, `created_at`, `deleted_at`) VALUES
+(1, '7744f', 4, '2026-10-23', 44100.00, 'Cash', '2026-10-24 14:32:35', NULL),
+(2, '77445g', 13, '2026-10-25', 44100.00, 'Cash', '2026-10-24 18:59:38', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sale_items`
+--
+
+CREATE TABLE `sale_items` (
+  `id` int(11) NOT NULL,
+  `sale_id` int(11) NOT NULL,
+  `part_id` int(11) NOT NULL,
+  `quantity` int(11) NOT NULL,
+  `unit_price` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `cost_price` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `line_total` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `sale_items`
+--
+
+INSERT INTO `sale_items` (`id`, `sale_id`, `part_id`, `quantity`, `unit_price`, `cost_price`, `line_total`, `created_at`) VALUES
+(1, 1, 6, 45, 980.00, 0.00, 44100.00, '2026-10-24 14:32:35'),
+(2, 2, 6, 45, 980.00, 0.00, 44100.00, '2026-10-24 18:59:38');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sale_returns`
+--
+
+CREATE TABLE `sale_returns` (
+  `id` int(11) NOT NULL,
+  `return_no` varchar(50) NOT NULL,
+  `sale_id` int(11) NOT NULL,
+  `customer_id` int(11) NOT NULL,
+  `return_date` date NOT NULL,
+  `total_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `note` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `deleted_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `sale_returns`
+--
+
+INSERT INTO `sale_returns` (`id`, `return_no`, `sale_id`, `customer_id`, `return_date`, `total_amount`, `note`, `created_at`, `deleted_at`) VALUES
+(1, '0211', 2, 13, '2026-10-20', 12740.00, 'damage', '2026-10-24 19:23:40', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sale_return_items`
+--
+
+CREATE TABLE `sale_return_items` (
+  `id` int(11) NOT NULL,
+  `sale_return_id` int(11) NOT NULL,
+  `part_id` int(11) NOT NULL,
+  `quantity` int(11) NOT NULL,
+  `unit_price` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `line_total` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `sale_return_items`
+--
+
+INSERT INTO `sale_return_items` (`id`, `sale_return_id`, `part_id`, `quantity`, `unit_price`, `line_total`, `created_at`) VALUES
+(1, 1, 6, 13, 980.00, 12740.00, '2026-10-24 19:23:40');
 
 -- --------------------------------------------------------
 
@@ -216,7 +405,7 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `name`, `contact_no`, `email`, `password`, `status`, `remember_token`, `image`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (2, 'Kamal Uddin', NULL, 'kamal@yahoo.com', '738f69d66dd207d6184e396e0c7e6bd582165627', 1, '14201791604761119689', NULL, NULL, NULL, NULL),
-(3, 'MaZhar Pritom', NULL, 'tom@gmail.com', 'b986415c93241513d33d01fcf532a6c47ac4f3ee', 1, '6398afc25a7792b0bade753ad2f3550606d3b07c53eec07110b96786e9a83ae8', NULL, NULL, NULL, NULL);
+(3, 'MaZhar Pritom', NULL, 'tom@gmail.com', 'b986415c93241513d33d01fcf532a6c47ac4f3ee', 1, '692d39ab32f6f31b9ebd683cb38d4a3f0a40c867a3a1e55bee9a30495c0f4b70', NULL, NULL, NULL, NULL);
 
 --
 -- Indexes for dumped tables
@@ -235,10 +424,23 @@ ALTER TABLE `customers`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `expenses`
+--
+ALTER TABLE `expenses`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `parts`
 --
 ALTER TABLE `parts`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `payments`
+--
+ALTER TABLE `payments`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `type` (`type`,`party_id`);
 
 --
 -- Indexes for table `purchases`
@@ -252,6 +454,53 @@ ALTER TABLE `purchases`
 ALTER TABLE `purchase_items`
   ADD PRIMARY KEY (`id`),
   ADD KEY `purchase_id` (`purchase_id`),
+  ADD KEY `part_id` (`part_id`);
+
+--
+-- Indexes for table `purchase_returns`
+--
+ALTER TABLE `purchase_returns`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `purchase_id` (`purchase_id`),
+  ADD KEY `supplier_id` (`supplier_id`);
+
+--
+-- Indexes for table `purchase_return_items`
+--
+ALTER TABLE `purchase_return_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `purchase_return_id` (`purchase_return_id`),
+  ADD KEY `part_id` (`part_id`);
+
+--
+-- Indexes for table `sales`
+--
+ALTER TABLE `sales`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `customer_id` (`customer_id`);
+
+--
+-- Indexes for table `sale_items`
+--
+ALTER TABLE `sale_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `sale_id` (`sale_id`),
+  ADD KEY `part_id` (`part_id`);
+
+--
+-- Indexes for table `sale_returns`
+--
+ALTER TABLE `sale_returns`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `sale_id` (`sale_id`),
+  ADD KEY `customer_id` (`customer_id`);
+
+--
+-- Indexes for table `sale_return_items`
+--
+ALTER TABLE `sale_return_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `sale_return_id` (`sale_return_id`),
   ADD KEY `part_id` (`part_id`);
 
 --
@@ -283,22 +532,70 @@ ALTER TABLE `customers`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
+-- AUTO_INCREMENT for table `expenses`
+--
+ALTER TABLE `expenses`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `parts`
 --
 ALTER TABLE `parts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT for table `payments`
+--
+ALTER TABLE `payments`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `purchases`
 --
 ALTER TABLE `purchases`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `purchase_items`
 --
 ALTER TABLE `purchase_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT for table `purchase_returns`
+--
+ALTER TABLE `purchase_returns`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `purchase_return_items`
+--
+ALTER TABLE `purchase_return_items`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `sales`
+--
+ALTER TABLE `sales`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `sale_items`
+--
+ALTER TABLE `sale_items`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `sale_returns`
+--
+ALTER TABLE `sale_returns`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `sale_return_items`
+--
+ALTER TABLE `sale_return_items`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `suppliers`

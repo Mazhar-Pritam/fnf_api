@@ -177,3 +177,24 @@ function purchase_refresh_last_price($conn, $part_ids)
     $find->close();
     $set->close();
 }
+
+// [part_id => quantity] of this purchase that was already returned (purchase return module).
+function purchase_returned_quantities($conn, $purchase_id)
+{
+    $stmt = $conn->prepare(
+        "SELECT ri.part_id, SUM(ri.quantity) AS qty
+         FROM purchase_return_items ri
+         JOIN purchase_returns r ON r.id = ri.purchase_return_id
+         WHERE r.purchase_id = ? AND r.deleted_at IS NULL
+         GROUP BY ri.part_id"
+    );
+    $stmt->bind_param('i', $purchase_id);
+    $stmt->execute();
+    $rows = $stmt->get_result();
+    $map = [];
+    while ($row = $rows->fetch_assoc()) {
+        $map[(int)$row['part_id']] = (int)$row['qty'];
+    }
+    $stmt->close();
+    return $map;
+}

@@ -28,6 +28,12 @@ try {
     foreach ($p['items'] as $item) {
         $new[$item['part_id']] = $item['quantity'];
     }
+    // A part that already has a return cannot be reduced below the returned quantity.
+    foreach (purchase_returned_quantities($conn, $id) as $part_id => $returned) {
+        if (($new[$part_id] ?? 0) < $returned) {
+            throw new RuntimeException('Part #' . $part_id . ' already has a return of ' . $returned . '. The quantity cannot be lower than that. Delete or edit the return first');
+        }
+    }
     foreach (array_unique(array_merge(array_keys($old), array_keys($new))) as $part_id) {
         $delta = ($new[$part_id] ?? 0) - ($old[$part_id] ?? 0);
         purchase_adjust_stock($conn, $part_id, $delta);
@@ -44,6 +50,8 @@ try {
     $stmt->bind_param('sisdsi', $p['invoice_no'], $p['supplier_id'], $p['purchase_date'], $p['total_amount'], $p['note'], $id);
     $stmt->execute();
     $stmt->close();
+
+    purchase_refresh_last_price($conn, array_merge(array_keys($old), array_keys($new)));
 
     $conn->commit();
 
