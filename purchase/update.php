@@ -46,8 +46,8 @@ try {
 
     purchase_insert_items($conn, $id, $p['items']);
 
-    $stmt = $conn->prepare("UPDATE purchases SET invoice_no = ?, supplier_id = ?, purchase_date = ?, total_amount = ?, note = ? WHERE id = ?");
-    $stmt->bind_param('sisdsi', $p['invoice_no'], $p['supplier_id'], $p['purchase_date'], $p['total_amount'], $p['note'], $id);
+    $stmt = $conn->prepare("UPDATE purchases SET invoice_no = ?, supplier_id = ?, purchase_date = ?, total_amount = ?, paid_amount = ?, note = ? WHERE id = ?");
+    $stmt->bind_param('sisddsi', $p['invoice_no'], $p['supplier_id'], $p['purchase_date'], $p['total_amount'], $p['paid_amount'], $p['note'], $id);
     $stmt->execute();
     $stmt->close();
 

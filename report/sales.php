@@ -9,7 +9,7 @@ try {
     list($from, $to) = report_dates();
 
     $stmt = $cc->conn->prepare(
-        "SELECT s.id, s.invoice_no, s.sale_date AS doc_date, c.name AS party_name, s.total_amount,
+        "SELECT s.id, s.invoice_no, s.sale_date AS doc_date, c.name AS party_name, s.total_amount, s.paid_amount,
                 COALESCE(r.total, 0) AS returned
          FROM sales s
          LEFT JOIN customers c ON c.id = s.customer_id

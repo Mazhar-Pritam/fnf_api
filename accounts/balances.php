@@ -7,6 +7,7 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 // type=customer : what every customer still owes us
 // type=supplier : what we still owe every supplier
 // balance = billed - returned - paid
+// paid = money paid on the bill itself (Paid Amount) + separate payments
 $type = $_GET['type'] ?? '';
 
 try {
@@ -29,10 +30,10 @@ try {
     $sql = "SELECT t.id, t.name, t.phone,
                    COALESCE(b.total, 0) AS billed,
                    COALESCE(r.total, 0) AS returned,
-                   COALESCE(p.total, 0) AS paid,
-                   COALESCE(b.total, 0) - COALESCE(r.total, 0) - COALESCE(p.total, 0) AS balance
+                   COALESCE(p.total, 0) + COALESCE(b.paid_now, 0) AS paid,
+                   COALESCE(b.total, 0) - COALESCE(r.total, 0) - COALESCE(p.total, 0) - COALESCE(b.paid_now, 0) AS balance
             FROM $party t
-            LEFT JOIN (SELECT $key AS pid, SUM(total_amount) AS total FROM $bills WHERE deleted_at IS NULL GROUP BY $key) b ON b.pid = t.id
+            LEFT JOIN (SELECT $key AS pid, SUM(total_amount) AS total, SUM(paid_amount) AS paid_now FROM $bills WHERE deleted_at IS NULL GROUP BY $key) b ON b.pid = t.id
             LEFT JOIN (SELECT $key AS pid, SUM(total_amount) AS total FROM $returns WHERE deleted_at IS NULL GROUP BY $key) r ON r.pid = t.id
             LEFT JOIN (SELECT party_id AS pid, SUM(amount) AS total FROM payments WHERE type = '$payType' AND deleted_at IS NULL GROUP BY party_id) p ON p.pid = t.id
             WHERE t.deleted_at IS NULL

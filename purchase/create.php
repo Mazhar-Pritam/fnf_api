@@ -16,8 +16,8 @@ try {
 
     purchase_check_supplier($conn, $p['supplier_id']);
 
-    $stmt = $conn->prepare("INSERT INTO purchases (invoice_no, supplier_id, purchase_date, total_amount, note) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param('sisds', $p['invoice_no'], $p['supplier_id'], $p['purchase_date'], $p['total_amount'], $p['note']);
+    $stmt = $conn->prepare("INSERT INTO purchases (invoice_no, supplier_id, purchase_date, total_amount, paid_amount, note) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param('sisdds', $p['invoice_no'], $p['supplier_id'], $p['purchase_date'], $p['total_amount'], $p['paid_amount'], $p['note']);
     $stmt->execute();
     $purchase_id = $conn->insert_id;
     $stmt->close();
@@ -27,6 +27,8 @@ try {
     foreach ($p['items'] as $item) {
         purchase_adjust_stock($conn, $item['part_id'], $item['quantity']);
     }
+
+    purchase_refresh_last_price($conn, array_column($p['items'], 'part_id'));
 
     $conn->commit();
 

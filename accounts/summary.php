@@ -18,8 +18,14 @@ try {
     $saleReturns = one_total($conn, "SELECT SUM(total_amount) FROM sale_returns WHERE deleted_at IS NULL");
     $purchases = one_total($conn, "SELECT SUM(total_amount) FROM purchases WHERE deleted_at IS NULL");
     $purchaseReturns = one_total($conn, "SELECT SUM(total_amount) FROM purchase_returns WHERE deleted_at IS NULL");
-    $received = one_total($conn, "SELECT SUM(amount) FROM payments WHERE type = 'receipt' AND deleted_at IS NULL");
-    $paid = one_total($conn, "SELECT SUM(amount) FROM payments WHERE type = 'payment' AND deleted_at IS NULL");
+    // Money received = separate receipts + money paid on the sale bills themselves.
+    $received = one_total($conn, "SELECT SUM(amount) FROM payments WHERE type = 'receipt' AND deleted_at IS NULL")
+        + one_total($conn, "SELECT SUM(paid_amount) FROM sales WHERE deleted_at IS NULL");
+    // Money paid out = separate payments + money paid on the purchase bills themselves.
+    $paid = one_total($conn, "SELECT SUM(amount) FROM payments WHERE type = 'payment' AND deleted_at IS NULL")
+        + one_total($conn, "SELECT SUM(paid_amount) FROM purchases WHERE deleted_at IS NULL");
+    $received = round($received, 2);
+    $paid = round($paid, 2);
     $expenses = one_total($conn, "SELECT SUM(amount) FROM expenses WHERE deleted_at IS NULL");
 
     $data = [

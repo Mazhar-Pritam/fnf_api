@@ -16,28 +16,35 @@ try {
         throw new InvalidArgumentException('A valid party is required');
     }
 
+    // Every query has an "ord" column: 0 = a bill (goes first on the same day), 1 = money / returns.
     if ($type === 'customer') {
         $table = 'customers';
-        $sql = "SELECT sale_date AS d, 'Sale' AS kind, invoice_no AS ref, total_amount AS charge, 0 AS credit, id
+        $sql = "SELECT sale_date AS d, 'Sale' AS kind, invoice_no AS ref, total_amount AS charge, 0 AS credit, id, 0 AS ord
                 FROM sales WHERE customer_id = ? AND deleted_at IS NULL
                 UNION ALL
-                SELECT return_date, 'Sale Return', return_no, 0, total_amount, id
+                SELECT sale_date, 'Paid at Sale', invoice_no, 0, paid_amount, id, 1
+                FROM sales WHERE customer_id = ? AND deleted_at IS NULL AND paid_amount > 0
+                UNION ALL
+                SELECT return_date, 'Sale Return', return_no, 0, total_amount, id, 1
                 FROM sale_returns WHERE customer_id = ? AND deleted_at IS NULL
                 UNION ALL
-                SELECT payment_date, 'Payment Received', payment_no, 0, amount, id
+                SELECT payment_date, 'Payment Received', payment_no, 0, amount, id, 1
                 FROM payments WHERE type = 'receipt' AND party_id = ? AND deleted_at IS NULL
-                ORDER BY d ASC, id ASC";
+                ORDER BY d ASC, ord ASC, id ASC";
     } elseif ($type === 'supplier') {
         $table = 'suppliers';
-        $sql = "SELECT purchase_date AS d, 'Purchase' AS kind, invoice_no AS ref, total_amount AS charge, 0 AS credit, id
+        $sql = "SELECT purchase_date AS d, 'Purchase' AS kind, invoice_no AS ref, total_amount AS charge, 0 AS credit, id, 0 AS ord
                 FROM purchases WHERE supplier_id = ? AND deleted_at IS NULL
                 UNION ALL
-                SELECT return_date, 'Purchase Return', return_no, 0, total_amount, id
+                SELECT purchase_date, 'Paid at Purchase', invoice_no, 0, paid_amount, id, 1
+                FROM purchases WHERE supplier_id = ? AND deleted_at IS NULL AND paid_amount > 0
+                UNION ALL
+                SELECT return_date, 'Purchase Return', return_no, 0, total_amount, id, 1
                 FROM purchase_returns WHERE supplier_id = ? AND deleted_at IS NULL
                 UNION ALL
-                SELECT payment_date, 'Payment Made', payment_no, 0, amount, id
+                SELECT payment_date, 'Payment Made', payment_no, 0, amount, id, 1
                 FROM payments WHERE type = 'payment' AND party_id = ? AND deleted_at IS NULL
-                ORDER BY d ASC, id ASC";
+                ORDER BY d ASC, ord ASC, id ASC";
     } else {
         throw new InvalidArgumentException('Type must be customer or supplier');
     }
@@ -54,7 +61,7 @@ try {
     }
 
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param('iii', $party_id, $party_id, $party_id);
+    $stmt->bind_param('iiii', $party_id, $party_id, $party_id, $party_id);
     $stmt->execute();
     $rows = $stmt->get_result();
 

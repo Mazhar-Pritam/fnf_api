@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 24, 2026 at 10:06 PM
+-- Generation Time: Oct 24, 2026 at 10:35 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -126,7 +126,8 @@ CREATE TABLE `parts` (
 --
 
 INSERT INTO `parts` (`id`, `name`, `part_number`, `category_id`, `purchase_price`, `sale_price`, `stock_quantity`, `description`, `image`, `status`, `created_at`, `updated_at`, `deleted_at`, `brand`, `vehicle_model`, `minimum_stock`) VALUES
-(6, 'Pistons', 'pst002', 27, 750.00, 980.00, 103, 'Safety', NULL, 1, NULL, NULL, NULL, 'bbs', 'harrier', 0);
+(6, 'Pistons', 'pst002', 27, 750.00, 980.00, 103, 'Safety', NULL, 1, NULL, NULL, NULL, 'bbs', 'harrier', 0),
+(7, 'Plug', 'plg02', 30, 450.00, 680.00, 100, 'Safety', NULL, 1, NULL, NULL, NULL, 'dd', 'harrier', 0);
 
 -- --------------------------------------------------------
 
@@ -159,6 +160,7 @@ CREATE TABLE `purchases` (
   `supplier_id` int(11) NOT NULL,
   `purchase_date` date NOT NULL,
   `total_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `paid_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
   `note` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `status` int(11) NOT NULL DEFAULT 1,
@@ -170,11 +172,12 @@ CREATE TABLE `purchases` (
 -- Dumping data for table `purchases`
 --
 
-INSERT INTO `purchases` (`id`, `invoice_no`, `supplier_id`, `purchase_date`, `total_amount`, `note`, `created_at`, `status`, `updated_at`, `deleted_at`) VALUES
-(8, '654522', 14, '2026-10-20', 45500.00, 'Due', '2026-10-18 06:59:16', 1, NULL, NULL),
-(9, '654522', 15, '2026-10-22', 45500.00, 'Due', '2026-10-18 07:02:17', 1, NULL, NULL),
-(11, '77445', 14, '2026-10-20', 75000.00, 'Cash', '2026-10-24 14:30:18', 1, NULL, NULL),
-(12, '77445', 15, '2026-10-22', 75000.00, 'Cash', '2026-10-24 18:58:57', 1, NULL, NULL);
+INSERT INTO `purchases` (`id`, `invoice_no`, `supplier_id`, `purchase_date`, `total_amount`, `paid_amount`, `note`, `created_at`, `status`, `updated_at`, `deleted_at`) VALUES
+(8, '654522', 14, '2026-10-20', 45500.00, 0.00, 'Due', '2026-10-18 06:59:16', 1, NULL, NULL),
+(9, '654522', 15, '2026-10-22', 45500.00, 0.00, 'Due', '2026-10-18 07:02:17', 1, NULL, NULL),
+(11, '77445', 14, '2026-10-20', 75000.00, 0.00, 'Cash', '2026-10-24 14:30:18', 1, NULL, NULL),
+(12, '77445', 15, '2026-10-22', 75000.00, 0.00, 'Cash', '2026-10-24 18:58:57', 1, NULL, NULL),
+(13, '77445', 14, '2026-10-22', 45000.00, 25000.00, 'Cash', '2026-10-24 20:29:54', 1, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -203,7 +206,8 @@ INSERT INTO `purchase_items` (`id`, `purchase_id`, `part_id`, `quantity`, `unit_
 (3, 8, 4, 100, 455.00, 0.00, 45500.00, '2026-10-18 06:59:16'),
 (4, 9, 5, 130, 350.00, 0.00, 45500.00, '2026-10-18 07:02:17'),
 (5, 11, 6, 100, 750.00, 980.00, 75000.00, '2026-10-24 14:30:18'),
-(6, 12, 6, 100, 750.00, 980.00, 75000.00, '2026-10-24 18:58:57');
+(6, 12, 6, 100, 750.00, 980.00, 75000.00, '2026-10-24 18:58:57'),
+(7, 13, 7, 100, 450.00, 680.00, 45000.00, '2026-10-24 20:29:54');
 
 -- --------------------------------------------------------
 
@@ -265,6 +269,7 @@ CREATE TABLE `sales` (
   `customer_id` int(11) NOT NULL,
   `sale_date` date NOT NULL,
   `total_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `paid_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
   `note` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `deleted_at` datetime DEFAULT NULL
@@ -274,9 +279,9 @@ CREATE TABLE `sales` (
 -- Dumping data for table `sales`
 --
 
-INSERT INTO `sales` (`id`, `invoice_no`, `customer_id`, `sale_date`, `total_amount`, `note`, `created_at`, `deleted_at`) VALUES
-(1, '7744f', 4, '2026-10-23', 44100.00, 'Cash', '2026-10-24 14:32:35', NULL),
-(2, '77445g', 13, '2026-10-25', 44100.00, 'Cash', '2026-10-24 18:59:38', NULL);
+INSERT INTO `sales` (`id`, `invoice_no`, `customer_id`, `sale_date`, `total_amount`, `paid_amount`, `note`, `created_at`, `deleted_at`) VALUES
+(1, '7744f', 4, '2026-10-23', 44100.00, 0.00, 'Cash', '2026-10-24 14:32:35', NULL),
+(2, '77445g', 13, '2026-10-25', 44100.00, 0.00, 'Cash', '2026-10-24 18:59:38', NULL);
 
 -- --------------------------------------------------------
 
@@ -541,7 +546,7 @@ ALTER TABLE `expenses`
 -- AUTO_INCREMENT for table `parts`
 --
 ALTER TABLE `parts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `payments`
@@ -553,13 +558,13 @@ ALTER TABLE `payments`
 -- AUTO_INCREMENT for table `purchases`
 --
 ALTER TABLE `purchases`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `purchase_items`
 --
 ALTER TABLE `purchase_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `purchase_returns`

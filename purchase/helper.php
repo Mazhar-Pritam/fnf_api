@@ -56,12 +56,23 @@ function purchase_read_input()
         throw new InvalidArgumentException('Add at least one item');
     }
 
+    // Paid amount: money paid at the time of the purchase. Empty means 0 (everything is due).
+    $paid = (isset($input['paid_amount']) && $input['paid_amount'] !== '' && is_numeric($input['paid_amount']))
+        ? round((float)$input['paid_amount'], 2) : 0;
+    if ($paid < 0) {
+        throw new InvalidArgumentException('Paid amount cannot be below 0');
+    }
+    if ($paid > round($total, 2)) {
+        throw new InvalidArgumentException('Paid amount cannot be more than the total');
+    }
+
     return [
         'invoice_no' => $invoice_no,
         'supplier_id' => $supplier_id,
         'purchase_date' => $purchase_date,
         'note' => $note,
         'total_amount' => round($total, 2),
+        'paid_amount' => $paid,
         'items' => $items,
     ];
 }

@@ -49,8 +49,8 @@ try {
 
     sale_insert_items($conn, $id, $s['items'], $old_costs);
 
-    $stmt = $conn->prepare("UPDATE sales SET invoice_no = ?, customer_id = ?, sale_date = ?, total_amount = ?, note = ? WHERE id = ?");
-    $stmt->bind_param('sisdsi', $s['invoice_no'], $s['customer_id'], $s['sale_date'], $s['total_amount'], $s['note'], $id);
+    $stmt = $conn->prepare("UPDATE sales SET invoice_no = ?, customer_id = ?, sale_date = ?, total_amount = ?, paid_amount = ?, note = ? WHERE id = ?");
+    $stmt->bind_param('sisddsi', $s['invoice_no'], $s['customer_id'], $s['sale_date'], $s['total_amount'], $s['paid_amount'], $s['note'], $id);
     $stmt->execute();
     $stmt->close();
 

@@ -16,8 +16,8 @@ try {
 
     sale_check_customer($conn, $s['customer_id']);
 
-    $stmt = $conn->prepare("INSERT INTO sales (invoice_no, customer_id, sale_date, total_amount, note) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param('sisds', $s['invoice_no'], $s['customer_id'], $s['sale_date'], $s['total_amount'], $s['note']);
+    $stmt = $conn->prepare("INSERT INTO sales (invoice_no, customer_id, sale_date, total_amount, paid_amount, note) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param('sisdds', $s['invoice_no'], $s['customer_id'], $s['sale_date'], $s['total_amount'], $s['paid_amount'], $s['note']);
     $stmt->execute();
     $sale_id = $conn->insert_id;
     $stmt->close();
